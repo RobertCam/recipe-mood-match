@@ -1,36 +1,124 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🍲 Mood Recipe Match
 
-## Getting Started
+A Next.js web application that generates personalized recipes based on your current mood using OpenAI's GPT model. Simply select how you're feeling, optionally specify any allergies, and get a custom recipe tailored to match your mood!
 
-First, run the development server:
+## ✨ Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Mood-Based Recipe Generation**: Choose from predefined moods (tired, adventurous, lazy, cozy, energetic, romantic, stressed, celebratory) or enter a custom mood
+- **Allergy Support**: Specify allergies to ensure recipes avoid problematic ingredients
+- **Recipe Saving**: Save your favorite recipes to localStorage for easy access later
+- **Beautiful UI**: Modern, responsive design with a warm, food-themed color palette
+- **Real-Time Generation**: Get instant recipe suggestions powered by OpenAI
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **AI**: OpenAI API (GPT model)
+- **Storage**: Browser localStorage
+
+## 📋 Prerequisites
+
+- Node.js 18+ and npm/yarn/pnpm
+- OpenAI API key ([Get one here](https://platform.openai.com/api-keys))
+
+## 🚀 Getting Started
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd recipe-mood-match
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
+
+3. **Set up environment variables**
+   
+   Create a `.env.local` file in the root directory:
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+4. **Run the development server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   # or
+   pnpm dev
+   ```
+
+5. **Open your browser**
+   
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## 📁 Project Structure
+
+```
+recipe-mood-match/
+├── app/
+│   ├── api/
+│   │   └── recipe/
+│   │       └── route.ts          # API endpoint for recipe generation
+│   ├── page.tsx                  # Main page component
+│   ├── layout.tsx                # Root layout
+│   └── globals.css               # Global styles
+├── components/
+│   ├── MoodSelector.tsx          # Mood selection interface
+│   ├── RecipeCard.tsx            # Recipe display component
+│   ├── SavedRecipes.tsx          # Saved recipes list
+│   └── LoadingSpinner.tsx        # Loading indicator
+├── lib/
+│   ├── openai.ts                 # OpenAI integration
+│   └── storage.ts                 # LocalStorage utilities
+└── types/
+    └── recipe.ts                 # TypeScript type definitions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🎯 How It Works
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Select Your Mood**: Choose from predefined moods or enter a custom one
+2. **Add Allergies (Optional)**: Specify any food allergies separated by commas
+3. **Generate Recipe**: Click "Generate Recipe" to get a personalized recipe
+4. **View Recipe**: See the recipe name, ingredients, step-by-step instructions, and an explanation of why it matches your mood
+5. **Save Recipe**: Save recipes you like to access them later from the saved recipes section
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🔧 Available Scripts
 
-## Learn More
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
 
-To learn more about Next.js, take a look at the following resources:
+## 🌐 Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The easiest way to deploy this Next.js app is using [Vercel](https://vercel.com):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Push your code to GitHub
+2. Import your repository on Vercel
+3. Add your `OPENAI_API_KEY` as an environment variable
+4. Deploy!
 
-## Deploy on Vercel
+For more deployment options, see the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📝 Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Recipes are saved to browser localStorage, so they persist across sessions
+- The app uses OpenAI's GPT model to generate creative, mood-matched recipes
+- All recipes include allergy considerations when specified
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
+## 📄 License
+
+This project is private and not licensed for public use.

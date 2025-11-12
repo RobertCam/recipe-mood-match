@@ -15,7 +15,7 @@ const PREDEFINED_MOODS: PredefinedMood[] = [
 ];
 
 interface MoodSelectorProps {
-  onMoodSelect: (mood: string) => void;
+  onMoodSelect: (mood: string, allergies?: string[]) => void;
   disabled?: boolean;
 }
 
@@ -26,6 +26,7 @@ export default function MoodSelector({
   const [selectedMood, setSelectedMood] = useState<Mood | "">("");
   const [customMood, setCustomMood] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [allergies, setAllergies] = useState("");
 
   const handleMoodChange = (value: Mood) => {
     setSelectedMood(value);
@@ -41,7 +42,11 @@ export default function MoodSelector({
   const handleGenerate = () => {
     const moodToUse = selectedMood === "other" ? customMood.trim() : selectedMood;
     if (moodToUse) {
-      onMoodSelect(moodToUse);
+      const allergiesList = allergies
+        .split(",")
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0);
+      onMoodSelect(moodToUse, allergiesList.length > 0 ? allergiesList : undefined);
     }
   };
 
@@ -75,6 +80,24 @@ export default function MoodSelector({
             className="flex-1 px-4 py-3 rounded-lg border-2 border-amber-200 bg-white text-gray-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-300 transition-all disabled:opacity-50"
           />
         )}
+      </div>
+
+      <div className="w-full">
+        <label htmlFor="allergies" className="block text-sm font-medium text-gray-700 mb-2">
+          Allergies (optional) - separate with commas
+        </label>
+        <input
+          id="allergies"
+          type="text"
+          value={allergies}
+          onChange={(e) => setAllergies(e.target.value)}
+          placeholder="e.g., peanuts, dairy, gluten"
+          disabled={disabled}
+          className="w-full px-4 py-3 rounded-lg border-2 border-amber-200 bg-white text-gray-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-300 transition-all disabled:opacity-50"
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          Recipes will avoid ingredients containing these allergens
+        </p>
       </div>
 
       <button

@@ -4,7 +4,7 @@ import { generateRecipe } from "@/lib/openai";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { mood } = body;
+    const { mood, allergies } = body;
 
     if (!mood || typeof mood !== "string" || mood.trim().length === 0) {
       return NextResponse.json(
@@ -13,7 +13,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const recipe = await generateRecipe(mood.trim());
+    const allergiesList = Array.isArray(allergies)
+      ? allergies.filter((a) => typeof a === "string" && a.trim().length > 0)
+      : [];
+
+    const recipe = await generateRecipe(mood.trim(), allergiesList);
 
     return NextResponse.json(recipe, { status: 200 });
   } catch (error) {

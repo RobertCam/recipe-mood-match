@@ -32,7 +32,7 @@ export default function Home() {
     }
   }, [currentRecipe]);
 
-  const handleMoodSelect = async (mood: string) => {
+  const handleMoodSelect = async (mood: string, allergies?: string[]) => {
     setIsLoading(true);
     setError(null);
     setCurrentRecipe(null);
@@ -43,7 +43,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ mood }),
+        body: JSON.stringify({ mood, allergies: allergies || [] }),
       });
 
       const contentType = response.headers.get("content-type");

@@ -11,8 +11,12 @@ function getOpenAIClient() {
   });
 }
 
-export async function generateRecipe(mood: string): Promise<Recipe> {
-  const prompt = `You are a creative culinary expert. Generate a food or drink recipe that perfectly matches the mood: "${mood}".
+export async function generateRecipe(mood: string, allergies: string[] = []): Promise<Recipe> {
+  const allergyNote = allergies.length > 0
+    ? `\n\nIMPORTANT: The user has allergies to the following: ${allergies.join(", ")}. You MUST avoid ALL ingredients that contain or are derived from these allergens. Do not use any ingredients that contain these allergens, even in small amounts.`
+    : "";
+
+  const prompt = `You are a creative culinary expert. Generate a food or drink recipe that perfectly matches the mood: "${mood}".${allergyNote}
 
 Return a JSON object with the following structure:
 {
