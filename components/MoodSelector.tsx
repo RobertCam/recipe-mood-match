@@ -15,7 +15,7 @@ const PREDEFINED_MOODS: PredefinedMood[] = [
 ];
 
 interface MoodSelectorProps {
-  onMoodSelect: (mood: string, allergies?: string[]) => void;
+  onMoodSelect: (mood: string, allergies?: string[], ingredients?: string[]) => void;
   disabled?: boolean;
 }
 
@@ -27,6 +27,7 @@ export default function MoodSelector({
   const [customMood, setCustomMood] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [allergies, setAllergies] = useState("");
+  const [ingredients, setIngredients] = useState("");
 
   const handleMoodChange = (value: Mood) => {
     setSelectedMood(value);
@@ -46,7 +47,15 @@ export default function MoodSelector({
         .split(",")
         .map((a) => a.trim())
         .filter((a) => a.length > 0);
-      onMoodSelect(moodToUse, allergiesList.length > 0 ? allergiesList : undefined);
+      const ingredientsList = ingredients
+        .split(",")
+        .map((i) => i.trim())
+        .filter((i) => i.length > 0);
+      onMoodSelect(
+        moodToUse,
+        allergiesList.length > 0 ? allergiesList : undefined,
+        ingredientsList.length > 0 ? ingredientsList : undefined
+      );
     }
   };
 
@@ -97,6 +106,24 @@ export default function MoodSelector({
         />
         <p className="mt-1 text-xs text-gray-500">
           Recipes will avoid ingredients containing these allergens
+        </p>
+      </div>
+
+      <div className="w-full">
+        <label htmlFor="ingredients" className="block text-sm font-medium text-gray-700 mb-2">
+          Specific Ingredients (optional) - separate with commas
+        </label>
+        <input
+          id="ingredients"
+          type="text"
+          value={ingredients}
+          onChange={(e) => setIngredients(e.target.value)}
+          placeholder="e.g., chicken, tomatoes, basil, pasta"
+          disabled={disabled}
+          className="w-full px-4 py-3 rounded-lg border-2 border-amber-200 bg-white text-gray-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-300 transition-all disabled:opacity-50"
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          Recipes will include these specific ingredients if possible
         </p>
       </div>
 

@@ -1,11 +1,12 @@
 # 🍲 Mood Recipe Match
 
-A Next.js web application that generates personalized recipes based on your current mood using OpenAI's GPT model. Simply select how you're feeling, optionally specify any allergies, and get a custom recipe tailored to match your mood!
+A Next.js web application that generates personalized recipes based on your current mood using OpenAI's GPT model. Simply select how you're feeling, optionally specify any allergies or ingredients you'd like to include, and get a custom recipe tailored to match your mood!
 
 ## ✨ Features
 
 - **Mood-Based Recipe Generation**: Choose from predefined moods (tired, adventurous, lazy, cozy, energetic, romantic, stressed, celebratory) or enter a custom mood
 - **Allergy Support**: Specify allergies to ensure recipes avoid problematic ingredients
+- **Ingredient Preferences**: Request specific ingredients to be included in your recipe
 - **Recipe Saving**: Save your favorite recipes to localStorage for easy access later
 - **Beautiful UI**: Modern, responsive design with a warm, food-themed color palette
 - **Real-Time Generation**: Get instant recipe suggestions powered by OpenAI
@@ -86,10 +87,11 @@ recipe-mood-match/
 ## 🎯 How It Works
 
 1. **Select Your Mood**: Choose from predefined moods or enter a custom one
-2. **Add Allergies (Optional)**: Specify any food allergies separated by commas
-3. **Generate Recipe**: Click "Generate Recipe" to get a personalized recipe
-4. **View Recipe**: See the recipe name, ingredients, step-by-step instructions, and an explanation of why it matches your mood
-5. **Save Recipe**: Save recipes you like to access them later from the saved recipes section
+2. **Add Allergies (Optional)**: Specify any food allergies separated by commas - recipes will avoid these ingredients
+3. **Specify Ingredients (Optional)**: List specific ingredients you'd like to include - recipes will feature these prominently
+4. **Generate Recipe**: Click "Generate Recipe" to get a personalized recipe
+5. **View Recipe**: See the recipe name, ingredients, step-by-step instructions, and an explanation of why it matches your mood
+6. **Save Recipe**: Save recipes you like to access them later from the saved recipes section
 
 ## 🔧 Available Scripts
 
@@ -112,8 +114,9 @@ For more deployment options, see the [Next.js deployment documentation](https://
 ## 📝 Notes
 
 - Recipes are saved to browser localStorage, so they persist across sessions
-- The app uses OpenAI's GPT model to generate creative, mood-matched recipes
+- The app uses OpenAI's GPT model (gpt-5-mini) to generate creative, mood-matched recipes
 - All recipes include allergy considerations when specified
+- When you provide specific ingredients, the AI will incorporate them into the recipe while still matching your mood
 
 ## 🤝 Contributing
 
