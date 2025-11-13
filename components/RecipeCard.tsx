@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Recipe } from "@/types/recipe";
 import { isRecipeSaved } from "@/lib/storage";
 
@@ -15,6 +16,69 @@ export default function RecipeCard({
   isSaved: isSavedProp,
 }: RecipeCardProps) {
   const isSaved = isSavedProp ?? isRecipeSaved(recipe);
+  const [isSharing, setIsSharing] = useState(false);
+
+  const formatRecipeForSharing = (recipe: Recipe): string => {
+    let text = `🍲 ${recipe.name}\n\n`;
+    
+    text += "📋 Ingredients:\n";
+    recipe.ingredients.forEach((ingredient, index) => {
+      text += `${index + 1}. ${ingredient}\n`;
+    });
+    
+    if (recipe.instructions && recipe.instructions.length > 0) {
+      text += "\n👨‍🍳 Instructions:\n";
+      recipe.instructions.forEach((instruction, index) => {
+        text += `${index + 1}. ${instruction}\n`;
+      });
+    }
+    
+    if (recipe.explanation) {
+      text += `\n💭 ${recipe.explanation}\n`;
+    }
+    
+    return text;
+  };
+
+  const handleShare = async () => {
+    if (!navigator.share) {
+      // Fallback: copy to clipboard
+      const text = formatRecipeForSharing(recipe);
+      try {
+        await navigator.clipboard.writeText(text);
+        alert("Recipe copied to clipboard!");
+      } catch (err) {
+        console.error("Failed to copy recipe:", err);
+        alert("Failed to share recipe. Please try again.");
+      }
+      return;
+    }
+
+    setIsSharing(true);
+    try {
+      const shareData = {
+        title: recipe.name,
+        text: formatRecipeForSharing(recipe),
+      };
+
+      await navigator.share(shareData);
+    } catch (err) {
+      // User cancelled or error occurred
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error("Error sharing recipe:", err);
+        // Fallback to clipboard
+        try {
+          const text = formatRecipeForSharing(recipe);
+          await navigator.clipboard.writeText(text);
+          alert("Recipe copied to clipboard!");
+        } catch (clipboardErr) {
+          console.error("Failed to copy recipe:", clipboardErr);
+        }
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6 animate-fade-in animate-slide-up">
@@ -71,17 +135,24 @@ export default function RecipeCard({
         </div>
       </div>
 
-      <div className="pt-4 border-t border-gray-200">
+      <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-3">
         <button
           onClick={() => onSave(recipe)}
           disabled={isSaved}
-          className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
+          className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
             isSaved
               ? "bg-gray-200 text-gray-500 cursor-not-allowed"
               : "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 shadow-md"
           }`}
         >
           {isSaved ? "✓ Saved" : "Save Recipe"}
+        </button>
+        <button
+          onClick={handleShare}
+          disabled={isSharing}
+          className="flex-1 py-3 px-6 rounded-lg font-semibold bg-white border-2 border-amber-500 text-amber-600 hover:bg-amber-50 transform hover:scale-105 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+        >
+          {isSharing ? "Sharing..." : "📤 Share"}
         </button>
       </div>
     </div>

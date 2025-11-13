@@ -14,8 +14,55 @@ const PREDEFINED_MOODS: PredefinedMood[] = [
   "celebratory",
 ];
 
+const CUISINES = [
+  "Any",
+  "Mexican",
+  "French",
+  "Japanese",
+  "Italian",
+  "Chinese",
+  "Thai",
+  "Indian",
+  "Mediterranean",
+  "American",
+  "Korean",
+  "Vietnamese",
+  "Greek",
+  "Spanish",
+  "Middle Eastern",
+  "Caribbean",
+  "Brazilian",
+  "Moroccan",
+  "Turkish",
+  "German",
+];
+
+const DISH_TYPES = [
+  "Any",
+  "Appetizer",
+  "Main Course",
+  "Dessert",
+  "Snack",
+  "Beverage",
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Side Dish",
+  "Soup",
+  "Salad",
+  "Sandwich",
+  "Pasta",
+  "Pizza",
+];
+
 interface MoodSelectorProps {
-  onMoodSelect: (mood: string, allergies?: string[], ingredients?: string[]) => void;
+  onMoodSelect: (
+    mood: string,
+    allergies?: string[],
+    ingredients?: string[],
+    cuisine?: string,
+    dishType?: string
+  ) => void;
   disabled?: boolean;
 }
 
@@ -28,6 +75,8 @@ export default function MoodSelector({
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [allergies, setAllergies] = useState("");
   const [ingredients, setIngredients] = useState("");
+  const [cuisine, setCuisine] = useState("Any");
+  const [dishType, setDishType] = useState("Any");
 
   const handleMoodChange = (value: Mood) => {
     setSelectedMood(value);
@@ -51,10 +100,14 @@ export default function MoodSelector({
         .split(",")
         .map((i) => i.trim())
         .filter((i) => i.length > 0);
+      const selectedCuisine = cuisine && cuisine !== "Any" ? cuisine : undefined;
+      const selectedDishType = dishType && dishType !== "Any" ? dishType : undefined;
       onMoodSelect(
         moodToUse,
         allergiesList.length > 0 ? allergiesList : undefined,
-        ingredientsList.length > 0 ? ingredientsList : undefined
+        ingredientsList.length > 0 ? ingredientsList : undefined,
+        selectedCuisine,
+        selectedDishType
       );
     }
   };
@@ -125,6 +178,46 @@ export default function MoodSelector({
         <p className="mt-1 text-xs text-gray-500">
           Recipes will include these specific ingredients if possible
         </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="w-full">
+          <label htmlFor="cuisine" className="block text-sm font-medium text-gray-700 mb-2">
+            Cuisine Type (optional)
+          </label>
+          <select
+            id="cuisine"
+            value={cuisine}
+            onChange={(e) => setCuisine(e.target.value)}
+            disabled={disabled}
+            className="w-full px-4 py-3 rounded-lg border-2 border-amber-200 bg-white text-gray-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {CUISINES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="w-full">
+          <label htmlFor="dishType" className="block text-sm font-medium text-gray-700 mb-2">
+            Dish Type (optional)
+          </label>
+          <select
+            id="dishType"
+            value={dishType}
+            onChange={(e) => setDishType(e.target.value)}
+            disabled={disabled}
+            className="w-full px-4 py-3 rounded-lg border-2 border-amber-200 bg-white text-gray-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {DISH_TYPES.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <button

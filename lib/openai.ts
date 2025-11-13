@@ -14,7 +14,9 @@ function getOpenAIClient() {
 export async function generateRecipe(
   mood: string,
   allergies: string[] = [],
-  ingredients: string[] = []
+  ingredients: string[] = [],
+  cuisine?: string,
+  dishType?: string
 ): Promise<Recipe> {
   const allergyNote = allergies.length > 0
     ? `\n\nIMPORTANT: The user has allergies to the following: ${allergies.join(", ")}. You MUST avoid ALL ingredients that contain or are derived from these allergens. Do not use any ingredients that contain these allergens, even in small amounts.`
@@ -24,7 +26,15 @@ export async function generateRecipe(
     ? `\n\nIMPORTANT: The user wants to include these specific ingredients in the recipe: ${ingredients.join(", ")}. You MUST incorporate these ingredients into the recipe in a creative and meaningful way. The recipe should feature these ingredients prominently while still matching the mood.`
     : "";
 
-  const prompt = `You are a creative culinary expert. Generate a food or drink recipe that perfectly matches the mood: "${mood}".${allergyNote}${ingredientNote}
+  const cuisineNote = cuisine
+    ? `\n\nThe recipe should be in the ${cuisine} cuisine style. Use authentic ${cuisine} ingredients, cooking techniques, and flavor profiles.`
+    : "";
+
+  const dishTypeNote = dishType
+    ? `\n\nThe recipe should be a ${dishType.toLowerCase()}. Make sure it fits this category appropriately.`
+    : "";
+
+  const prompt = `You are a creative culinary expert. Generate a food or drink recipe that perfectly matches the mood: "${mood}".${allergyNote}${ingredientNote}${cuisineNote}${dishTypeNote}
 
 Return a JSON object with the following structure:
 {

@@ -32,7 +32,13 @@ export default function Home() {
     }
   }, [currentRecipe]);
 
-  const handleMoodSelect = async (mood: string, allergies?: string[], ingredients?: string[]) => {
+  const handleMoodSelect = async (
+    mood: string,
+    allergies?: string[],
+    ingredients?: string[],
+    cuisine?: string,
+    dishType?: string
+  ) => {
     setIsLoading(true);
     setError(null);
     setCurrentRecipe(null);
@@ -46,7 +52,9 @@ export default function Home() {
         body: JSON.stringify({ 
           mood, 
           allergies: allergies || [], 
-          ingredients: ingredients || [] 
+          ingredients: ingredients || [],
+          cuisine: cuisine || undefined,
+          dishType: dishType || undefined,
         }),
       });
 
