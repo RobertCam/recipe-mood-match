@@ -49,7 +49,7 @@ Make the recipe creative, specific, and emotionally resonant. The explanation sh
   try {
     const openai = getOpenAIClient();
     const completion = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-5.6-terra",
       messages: [
         {
           role: "system",

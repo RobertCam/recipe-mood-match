@@ -114,7 +114,7 @@ For more deployment options, see the [Next.js deployment documentation](https://
 ## 📝 Notes
 
 - Recipes are saved to browser localStorage, so they persist across sessions
-- The app uses OpenAI's GPT model (gpt-5-mini) to generate creative, mood-matched recipes
+- The app uses OpenAI's GPT model (gpt-5.6-terra) to generate creative, mood-matched recipes
 - All recipes include allergy considerations when specified
 - When you provide specific ingredients, the AI will incorporate them into the recipe while still matching your mood
 
