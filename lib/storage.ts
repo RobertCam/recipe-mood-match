@@ -2,6 +2,13 @@ import { Recipe } from "@/types/recipe";
 
 const STORAGE_KEY = "mood-recipe-match-saved-recipes";
 
+export const RECIPES_CHANGED_EVENT = "mood-recipes-changed";
+
+function notifyRecipesChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(RECIPES_CHANGED_EVENT));
+}
+
 export function saveRecipe(recipe: Recipe): void {
   try {
     const saved = getSavedRecipes();
@@ -11,6 +18,7 @@ export function saveRecipe(recipe: Recipe): void {
     };
     saved.push(recipeWithId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    notifyRecipesChanged();
   } catch (error) {
     console.error("Error saving recipe:", error);
     throw new Error("Failed to save recipe to localStorage");
@@ -38,6 +46,7 @@ export function deleteRecipe(id: string): void {
     const saved = getSavedRecipes();
     const filtered = saved.filter((recipe) => recipe.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    notifyRecipesChanged();
   } catch (error) {
     console.error("Error deleting recipe:", error);
     throw new Error("Failed to delete recipe from localStorage");

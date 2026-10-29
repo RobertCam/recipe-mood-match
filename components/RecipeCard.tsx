@@ -10,94 +10,121 @@ interface RecipeCardProps {
   isSaved?: boolean;
 }
 
+function label(value: string) {
+  if (!value) return value;
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function cleanStep(step: string) {
+  return step.replace(/^\s*step\s*\d+\s*[:.)\-]\s*/i, "");
+}
+
 export default function RecipeCard({
   recipe,
   onSave,
   isSaved: isSavedProp,
 }: RecipeCardProps) {
   const isSaved = isSavedProp ?? isRecipeSaved(recipe);
-  const [isSharing, setIsSharing] = useState(false);
+  const [shareLabel, setShareLabel] = useState("Share");
 
-  const formatRecipeForSharing = (recipe: Recipe): string => {
-    let text = `🍲 ${recipe.name}\n\n`;
-    
-    text += "📋 Ingredients:\n";
-    recipe.ingredients.forEach((ingredient, index) => {
+  const formatRecipeForSharing = (item: Recipe): string => {
+    let text = `${item.name}\n\n`;
+    text += "Ingredients:\n";
+    item.ingredients.forEach((ingredient, index) => {
       text += `${index + 1}. ${ingredient}\n`;
     });
-    
-    if (recipe.instructions && recipe.instructions.length > 0) {
-      text += "\n👨‍🍳 Instructions:\n";
-      recipe.instructions.forEach((instruction, index) => {
-        text += `${index + 1}. ${instruction}\n`;
+
+    if (item.instructions && item.instructions.length > 0) {
+      text += "\nInstructions:\n";
+      item.instructions.forEach((instruction, index) => {
+        text += `${index + 1}. ${cleanStep(instruction)}\n`;
       });
     }
-    
-    if (recipe.explanation) {
-      text += `\n💭 ${recipe.explanation}\n`;
+
+    if (item.explanation) {
+      text += `\n${item.explanation}\n`;
     }
-    
+
     return text;
+  };
+
+  const copyRecipe = async () => {
+    await navigator.clipboard.writeText(formatRecipeForSharing(recipe));
+    setShareLabel("Copied");
+    window.setTimeout(() => setShareLabel("Share"), 2000);
   };
 
   const handleShare = async () => {
     if (!navigator.share) {
-      // Fallback: copy to clipboard
-      const text = formatRecipeForSharing(recipe);
       try {
-        await navigator.clipboard.writeText(text);
-        alert("Recipe copied to clipboard!");
-      } catch (err) {
-        console.error("Failed to copy recipe:", err);
-        alert("Failed to share recipe. Please try again.");
+        await copyRecipe();
+      } catch (error) {
+        console.error("Failed to copy recipe:", error);
+        setShareLabel("Couldn't share");
+        window.setTimeout(() => setShareLabel("Share"), 2000);
       }
       return;
     }
 
-    setIsSharing(true);
+    setShareLabel("Sharing...");
     try {
-      const shareData = {
+      await navigator.share({
         title: recipe.name,
         text: formatRecipeForSharing(recipe),
-      };
-
-      await navigator.share(shareData);
-    } catch (err) {
-      // User cancelled or error occurred
-      if (err instanceof Error && err.name !== "AbortError") {
-        console.error("Error sharing recipe:", err);
-        // Fallback to clipboard
-        try {
-          const text = formatRecipeForSharing(recipe);
-          await navigator.clipboard.writeText(text);
-          alert("Recipe copied to clipboard!");
-        } catch (clipboardErr) {
-          console.error("Failed to copy recipe:", clipboardErr);
-        }
+      });
+      setShareLabel("Share");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        setShareLabel("Share");
+        return;
       }
-    } finally {
-      setIsSharing(false);
+      console.error("Error sharing recipe:", error);
+      try {
+        await copyRecipe();
+      } catch (clipboardError) {
+        console.error("Failed to copy recipe:", clipboardError);
+        setShareLabel("Couldn't share");
+        window.setTimeout(() => setShareLabel("Share"), 2000);
+      }
     }
   };
 
-  return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6 animate-fade-in animate-slide-up">
-      <div className="space-y-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
-          {recipe.name}
-        </h2>
+  const chips = [label(recipe.mood), recipe.cuisine, recipe.dishType].filter(Boolean) as string[];
 
-        <div className="pt-4 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-700 mb-3">
-            Ingredients
-          </h3>
-          <ul className="space-y-2">
+  return (
+    <article className="animate-fade-in animate-slide-up rounded-[28px] border border-stone-200/80 bg-white px-6 py-8 shadow-[0_24px_70px_-48px_rgba(68,32,8,0.7)] sm:px-10 sm:py-10">
+      <div className="flex flex-wrap gap-2">
+        {chips.map((chip) => (
+          <span
+            key={chip}
+            className="rounded-full bg-orange-50 px-3 py-1 text-xs font-medium tracking-wide text-orange-900"
+          >
+            {chip}
+          </span>
+        ))}
+      </div>
+
+      <h2 className="mt-4 max-w-4xl font-display text-4xl leading-[1.05] text-balance text-stone-950 sm:text-5xl">
+        {recipe.name}
+      </h2>
+      <p className="mt-3 text-sm text-stone-500">
+        {recipe.ingredients.length} ingredients
+        {recipe.instructions?.length ? ` · ${recipe.instructions.length} steps` : ""}
+      </p>
+
+      {recipe.explanation && (
+        <p className="mt-5 max-w-3xl font-display text-xl italic leading-snug text-stone-700 sm:text-2xl">
+          {recipe.explanation}
+        </p>
+      )}
+
+      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Ingredients</h3>
+          <ul className="mt-4 space-y-2.5">
             {recipe.ingredients.map((ingredient, index) => (
-              <li
-                key={index}
-                className="flex items-start gap-2 text-gray-600"
-              >
-                <span className="text-amber-500 mt-1.5">•</span>
+              <li key={`${ingredient}-${index}`} className="flex items-start gap-2.5 text-[15px] text-stone-700">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-600" />
                 <span>{ingredient}</span>
               </li>
             ))}
@@ -105,57 +132,49 @@ export default function RecipeCard({
         </div>
 
         {recipe.instructions && recipe.instructions.length > 0 && (
-          <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-700 mb-3">
-              Instructions
-            </h3>
-            <ol className="space-y-3">
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Instructions</h3>
+            <ol className="mt-4 space-y-4">
               {recipe.instructions.map((instruction, index) => (
-                <li
-                  key={index}
-                  className="flex items-start gap-3 text-gray-600"
-                >
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-500 text-white font-semibold flex items-center justify-center text-sm">
+                <li key={`${instruction}-${index}`} className="flex items-start gap-3 text-[15px] leading-relaxed text-stone-700">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-stone-900 text-xs font-semibold text-white">
                     {index + 1}
                   </span>
-                  <span className="flex-1 leading-relaxed">{instruction}</span>
+                  <span className="pt-0.5">{cleanStep(instruction)}</span>
                 </li>
               ))}
             </ol>
           </div>
         )}
-
-        <div className="pt-4 border-t border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">
-            Why this matches your mood
-          </h3>
-          <p className="text-gray-600 leading-relaxed italic">
-            {recipe.explanation}
-          </p>
-        </div>
       </div>
 
-      <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-3">
+      <div className="mt-10 flex flex-col gap-3 border-t border-stone-100 pt-6 sm:flex-row">
         <button
+          type="button"
           onClick={() => onSave(recipe)}
           disabled={isSaved}
-          className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all duration-200 ${
+          className={`inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition ${
             isSaved
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transform hover:scale-105 shadow-md"
+              ? "cursor-not-allowed bg-stone-100 text-stone-500"
+              : "bg-stone-900 text-white hover:bg-orange-800"
           }`}
         >
-          {isSaved ? "✓ Saved" : "Save Recipe"}
+          {isSaved ? "Saved" : "Save recipe"}
         </button>
         <button
+          type="button"
           onClick={handleShare}
-          disabled={isSharing}
-          className="flex-1 py-3 px-6 rounded-lg font-semibold bg-white border-2 border-amber-500 text-amber-600 hover:bg-amber-50 transform hover:scale-105 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+          disabled={shareLabel === "Sharing..."}
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-stone-300 bg-white px-6 py-3 text-sm font-semibold text-stone-800 transition hover:border-stone-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSharing ? "Sharing..." : "📤 Share"}
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M12 16V4" strokeLinecap="round" />
+              <path d="m7 8 5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6 13v5a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-5" strokeLinecap="round" />
+            </svg>
+            {shareLabel}
         </button>
       </div>
-    </div>
+    </article>
   );
 }
-

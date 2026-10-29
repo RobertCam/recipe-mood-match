@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Recipe } from "@/types/recipe";
-import { getSavedRecipes, deleteRecipe } from "@/lib/storage";
+import { RECIPES_CHANGED_EVENT, deleteRecipe, getSavedRecipes } from "@/lib/storage";
 
 interface SavedRecipesProps {
   onRecipeSelect?: (recipe: Recipe) => void;
@@ -10,23 +10,21 @@ interface SavedRecipesProps {
 
 export default function SavedRecipes({ onRecipeSelect }: SavedRecipesProps) {
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
+    const loadSavedRecipes = () => {
+      const recipes = getSavedRecipes();
+      recipes.sort((a, b) => b.timestamp - a.timestamp);
+      setSavedRecipes(recipes);
+    };
+
     loadSavedRecipes();
+    window.addEventListener(RECIPES_CHANGED_EVENT, loadSavedRecipes);
+    return () => window.removeEventListener(RECIPES_CHANGED_EVENT, loadSavedRecipes);
   }, []);
 
-  const loadSavedRecipes = () => {
-    const recipes = getSavedRecipes();
-    // Sort by timestamp, most recent first
-    recipes.sort((a, b) => b.timestamp - a.timestamp);
-    setSavedRecipes(recipes);
-  };
-
-  const handleDelete = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = (id: string) => {
     deleteRecipe(id);
-    loadSavedRecipes();
   };
 
   const formatDate = (timestamp: number) => {
@@ -37,58 +35,53 @@ export default function SavedRecipes({ onRecipeSelect }: SavedRecipesProps) {
     });
   };
 
-  if (savedRecipes.length === 0) {
-    return (
-      <div className="w-full max-w-2xl mx-auto mt-12 p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300 text-center">
-        <p className="text-gray-500">No saved recipes yet. Generate one to get started!</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full max-w-2xl mx-auto mt-12">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-2 border-amber-200 hover:border-amber-300 transition-all"
-      >
-        <h3 className="text-xl font-semibold text-gray-800">
-          Saved Recipes ({savedRecipes.length})
-        </h3>
-        <span className="text-amber-600 transform transition-transform">
-          {isExpanded ? "▼" : "▶"}
-        </span>
-      </button>
+    <section className="mt-16">
+      <div className="mb-5 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Library</p>
+          <h2 className="mt-1 font-display text-3xl text-stone-950 sm:text-4xl">Saved recipes</h2>
+        </div>
+        <p className="text-sm text-stone-500">
+          {savedRecipes.length === 0 ? "None yet" : `${savedRecipes.length} saved`}
+        </p>
+      </div>
 
-      {isExpanded && (
-        <div className="mt-4 space-y-3 animate-fade-in animate-slide-down">
-          {savedRecipes.map((recipe) => (
-            <div
-              key={recipe.id || recipe.timestamp}
-              onClick={() => onRecipeSelect?.(recipe)}
-              className="p-4 bg-white rounded-lg border-2 border-gray-200 hover:border-amber-300 hover:shadow-md transition-all cursor-pointer"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-800 truncate">
-                    {recipe.name}
-                  </h4>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Mood: {recipe.mood} • {formatDate(recipe.timestamp)}
-                  </p>
-                </div>
+      {savedRecipes.length === 0 ? (
+        <div className="rounded-[28px] border border-dashed border-stone-300 bg-white/50 px-6 py-12 text-center">
+          <p className="font-display text-2xl text-stone-800">Nothing kept yet</p>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-stone-500">
+            When a dish feels right, save it and it will show up here.
+          </p>
+        </div>
+      ) : (
+        <ul className="overflow-hidden rounded-[28px] border border-stone-200 bg-white">
+          {savedRecipes.map((recipe, index) => (
+            <li key={recipe.id || recipe.timestamp} className={index > 0 ? "border-t border-stone-100" : ""}>
+              <div className="flex items-center gap-4 px-5 py-4">
                 <button
-                  onClick={(e) => handleDelete(recipe.id || `recipe-${recipe.timestamp}`, e)}
-                  className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-all flex-shrink-0"
-                  aria-label="Delete recipe"
+                  type="button"
+                  onClick={() => onRecipeSelect?.(recipe)}
+                  className="min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900"
                 >
-                  Delete
+                  <h3 className="truncate font-display text-2xl leading-tight text-stone-950">{recipe.name}</h3>
+                  <p className="mt-1 text-sm text-stone-500">
+                    {recipe.mood} · {formatDate(recipe.timestamp)}
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(recipe.id || `recipe-${recipe.timestamp}`)}
+                  className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-stone-600 hover:bg-red-50 hover:text-red-700"
+                  aria-label={`Remove ${recipe.name}`}
+                >
+                  Remove
                 </button>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </section>
   );
 }
-

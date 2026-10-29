@@ -18,5 +18,7 @@ export interface Recipe {
   mood: string;
   timestamp: number;
   id?: string;
+  cuisine?: string;
+  dishType?: string;
 }
 

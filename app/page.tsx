@@ -1,36 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Recipe } from "@/types/recipe";
 import MoodSelector from "@/components/MoodSelector";
 import RecipeCard from "@/components/RecipeCard";
 import SavedRecipes from "@/components/SavedRecipes";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { saveRecipe } from "@/lib/storage";
+import FoodImage from "@/components/FoodImage";
+import { RECIPES_CHANGED_EVENT, isRecipeSaved, saveRecipe } from "@/lib/storage";
+import { HERO_PHOTO } from "@/lib/photos";
 
 export default function Home() {
   const [currentRecipe, setCurrentRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedRecipeIds, setSavedRecipeIds] = useState<Set<string>>(new Set());
+  const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Check if current recipe is saved
-    if (currentRecipe) {
-      const saved = localStorage.getItem("mood-recipe-match-saved-recipes");
-      if (saved) {
-        const recipes: Recipe[] = JSON.parse(saved);
-        const isSaved = recipes.some(
-          (r) =>
-            r.timestamp === currentRecipe.timestamp ||
-            (currentRecipe.id && r.id === currentRecipe.id)
-        );
-        setSavedRecipeIds(
-          new Set(isSaved ? [currentRecipe.id || `recipe-${currentRecipe.timestamp}`] : [])
-        );
+    const syncSavedState = () => {
+      if (!currentRecipe) {
+        setSavedRecipeIds(new Set());
+        return;
       }
-    }
+      const id = currentRecipe.id || `recipe-${currentRecipe.timestamp}`;
+      setSavedRecipeIds(new Set(isRecipeSaved(currentRecipe) ? [id] : []));
+    };
+
+    syncSavedState();
+    window.addEventListener(RECIPES_CHANGED_EVENT, syncSavedState);
+    return () => window.removeEventListener(RECIPES_CHANGED_EVENT, syncSavedState);
   }, [currentRecipe]);
+
+  const revealStage = () => {
+    requestAnimationFrame(() => {
+      stageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const handleMoodSelect = async (
     mood: string,
@@ -42,6 +48,7 @@ export default function Home() {
     setIsLoading(true);
     setError(null);
     setCurrentRecipe(null);
+    revealStage();
 
     try {
       const response = await fetch("/api/recipe", {
@@ -49,9 +56,9 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          mood, 
-          allergies: allergies || [], 
+        body: JSON.stringify({
+          mood,
+          allergies: allergies || [],
           ingredients: ingredients || [],
           cuisine: cuisine || undefined,
           dishType: dishType || undefined,
@@ -67,9 +74,7 @@ export default function Home() {
           throw new Error(errorData.error || "Failed to generate recipe");
         } else {
           const text = await response.text();
-          throw new Error(
-            `Server error (${response.status}): ${text.substring(0, 100)}`
-          );
+          throw new Error(`Server error (${response.status}): ${text.substring(0, 100)}`);
         }
       }
 
@@ -78,16 +83,18 @@ export default function Home() {
       }
 
       const recipe: Recipe = await response.json();
-      setCurrentRecipe(recipe);
+      setCurrentRecipe({
+        ...recipe,
+        ...(cuisine ? { cuisine } : {}),
+        ...(dishType ? { dishType } : {}),
+      });
     } catch (err) {
       if (err instanceof SyntaxError && err.message.includes("JSON")) {
         setError(
           "Received invalid response from server. Please check that your OpenAI API key is configured correctly."
         );
       } else {
-        setError(
-          err instanceof Error ? err.message : "Failed to generate recipe. Please try again."
-        );
+        setError(err instanceof Error ? err.message : "Failed to generate recipe. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -97,74 +104,81 @@ export default function Home() {
   const handleSaveRecipe = (recipe: Recipe) => {
     try {
       saveRecipe(recipe);
-      setSavedRecipeIds(
-        new Set([...savedRecipeIds, recipe.id || `recipe-${recipe.timestamp}`])
-      );
-    } catch (err) {
+      setSavedRecipeIds(new Set([...savedRecipeIds, recipe.id || `recipe-${recipe.timestamp}`]));
+    } catch {
       setError("Failed to save recipe. Please try again.");
     }
   };
 
   const handleRecipeSelect = (recipe: Recipe) => {
     setCurrentRecipe(recipe);
-    // Scroll to top to show the selected recipe
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setError(null);
+    revealStage();
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
-      <main className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
-        {/* Header */}
-        <header className="text-center mb-12 space-y-4">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-800">
-            🍲 Mood Recipe Match
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            Tell us how you're feeling, and we'll suggest the perfect recipe to match your mood!
-          </p>
-        </header>
-
-        {/* Mood Selector */}
-        <div className="mb-8">
-          <MoodSelector onMoodSelect={handleMoodSelect} disabled={isLoading} />
-        </div>
-
-        {/* Error State */}
-        {error && (
-          <div className="w-full max-w-2xl mx-auto mb-8 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
-            <p className="text-red-700 font-medium">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
-            >
-              Dismiss
-            </button>
+    <div className="min-h-screen bg-[#f3eee6] text-stone-900">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
+        <header className="mb-12 grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-orange-900">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-600" />
+              Mood Recipe Match
+            </p>
+            <h1 className="mt-4 font-display text-5xl leading-[1.02] text-stone-950 sm:text-6xl lg:text-7xl">
+              Cook for the mood you&apos;re in.
+            </h1>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-stone-600">
+              Choose a feeling, name a few ingredients, and get a recipe with a shopping list and the reason it fits.
+            </p>
           </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && <LoadingSpinner />}
-
-        {/* Recipe Display */}
-        {currentRecipe && !isLoading && (
-          <div className="mb-12">
-            <RecipeCard
-              recipe={currentRecipe}
-              onSave={handleSaveRecipe}
-              isSaved={savedRecipeIds.has(
-                currentRecipe.id || `recipe-${currentRecipe.timestamp}`
-              )}
+          <div className="relative aspect-[5/4] overflow-hidden rounded-[28px] shadow-[0_30px_80px_-42px_rgba(60,30,10,0.75)]">
+            <FoodImage
+              src={HERO_PHOTO.src}
+              alt={HERO_PHOTO.alt}
+              sizes="(min-width: 1024px) 480px, 100vw"
+              priority
             />
           </div>
+        </header>
+
+        <MoodSelector onMoodSelect={handleMoodSelect} disabled={isLoading} />
+
+        {(isLoading || currentRecipe || error) && (
+          <div ref={stageRef} className="mt-10 scroll-mt-8">
+            {error && (
+              <div className="mb-4 rounded-3xl border border-red-200 bg-red-50 px-5 py-4 text-red-800">
+                <p className="font-medium">Something went wrong</p>
+                <p className="mt-1 text-sm">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="mt-3 text-sm font-medium underline decoration-red-300 underline-offset-2 hover:decoration-red-800"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : (
+              currentRecipe && (
+                <RecipeCard
+                  recipe={currentRecipe}
+                  onSave={handleSaveRecipe}
+                  isSaved={savedRecipeIds.has(currentRecipe.id || `recipe-${currentRecipe.timestamp}`)}
+                />
+              )
+            )}
+          </div>
         )}
 
-        {/* Saved Recipes */}
         <SavedRecipes onRecipeSelect={handleRecipeSelect} />
       </main>
 
-      {/* Footer */}
-      <footer className="mt-16 py-8 text-center text-gray-500 text-sm">
-        <p>Powered by OpenAI • Built with Next.js</p>
+      <footer className="px-4 py-10 text-center text-sm text-stone-500">
+        <p>Recipes by OpenAI · Photographs via Unsplash</p>
       </footer>
     </div>
   );
